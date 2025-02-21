@@ -1,0 +1,41 @@
+"use server"
+
+import { salesClient } from "@/libs/api/services/sales"
+import { revalidatePath } from "next/cache";
+
+export const salesInvoiceCancel = async ({ pk }: { pk: number }) => { 
+  try {
+    const { response } = await salesClient.POST("/invoice/{invoice_id}/cancel/", {
+      params: {
+        path: {
+          invoice_id: pk
+        }
+      }
+    });
+
+    if (response.ok) {
+      revalidatePath("/modules/sales/invoices");
+      revalidatePath(`/modules/sales/invoices/detail/${pk}`);
+      
+      return {
+        status: "success",
+        message: "Invoice has been cancelled"
+      }
+    }
+
+    if(response.status === 500) {
+      throw new Error("Internal server error");
+    }
+
+    throw new Error("Failed to cancel Invoice");
+  } catch (error) {
+    const message = error instanceof Error
+      ? error.message
+      : "Failed to cancel Invoice";
+    
+    return {
+      status: "error",
+      message
+    }
+  }
+}

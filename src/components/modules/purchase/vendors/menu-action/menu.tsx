@@ -1,0 +1,50 @@
+"use client"
+
+import {
+  MainModuleActionMenuItem,
+  MainModuleActionMenuItemExport,
+  MainModuleActionMenuItemImport
+} from "@/components/modules/main/menu-actions"
+import { useParams, useRouter } from "next/navigation"
+import { Fragment } from "react";
+
+const routePrefix = "/modules/purchase/vendors";
+
+export const ModulePurchaseVendorsMenuCreate = () => {
+  const router = useRouter();
+  return (
+    <MainModuleActionMenuItem
+      onClick={() => router.push(`${routePrefix}/create`)}
+    >
+      Create New Vendor
+    </MainModuleActionMenuItem>
+  )
+}
+
+export const ModulePurchaseVendorsMenuBatch = () => {
+  return (
+    <Fragment>
+      <MainModuleActionMenuItemImport>
+        Import Data
+      </MainModuleActionMenuItemImport>
+      <MainModuleActionMenuItemExport>
+        Export Data
+      </MainModuleActionMenuItemExport>
+    </Fragment>
+  )
+}
+
+export const ModulePurchaseVendorsMenuEdit = () => {
+  const router = useRouter();
+  const param = useParams();
+
+  const pk = Number(param.pk);
+
+  return (
+    <MainModuleActionMenuItem
+      onClick={() => router.push(`${routePrefix}/edit/${pk}`)}
+    >
+      Edit Vendor
+    </MainModuleActionMenuItem>
+  )
+}

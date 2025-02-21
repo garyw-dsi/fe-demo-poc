@@ -1,0 +1,33 @@
+# Base image using nodejs v20
+FROM node:20-alpine AS base
+
+# Install compatibility libraries
+RUN apk add --no-cache libc6-compat
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies only if needed
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+
+RUN \
+  if [ -f yarn.lock ]; then yarn install; \
+  elif [ -f package-lock.json ]; then npm install; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Copy source files
+COPY . .
+
+# Set environment variables for development
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Expose the development port
+EXPOSE ${PORT}
+
+# Run the Next.js development server
+CMD ["npm", "run", "dev"] 
