@@ -22,13 +22,16 @@ jobs:
 
     - name: Log in to Amazon ECR
       run: |
-        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+        docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
     - name: Build Docker image
-      run:  docker build --rm --no-cache -f Dockerfile -t ${{ secrets.ECR_REPOSITORY }} .
+      run: docker build --rm --no-cache -f Dockerfile -t ${{ secrets.ECR_REPOSITORY }} .
 
     - name: Tag Docker image
-      run: docker tag ${{ secrets.ECR_REPOSITORY }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+      run: |
+        docker tag ${{ secrets.ECR_REPOSITORY }}:latest \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
     - name: Push Docker image to ECR
       run: |
@@ -42,7 +45,7 @@ jobs:
           --services ${{ secrets.ECS_SERVICE_NAME }} \
           --query "services[0].desiredCount" \
           --output text)
-        echo "current_desired_count=$CURRENT_DESIRED_COUNT" >> $GITHUB_ENV
+        echo "CURRENT_DESIRED_COUNT=$CURRENT_DESIRED_COUNT" >> $GITHUB_ENV
 
     - name: Scale down ECS service to 0
       run: |
@@ -51,9 +54,13 @@ jobs:
           --service ${{ secrets.ECS_SERVICE_NAME }} \
           --desired-count 0
 
+    - name: Wait for ECS service to scale down
+      run: sleep 10
+
     - name: Scale up ECS service to original desired count
       run: |
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
           --service ${{ secrets.ECS_SERVICE_NAME }} \
-          --desired-count ${{ env.current_desired_count }}
+          --desired-count $CURRENT_DESIRED_COUNT
+
